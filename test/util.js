@@ -1,7 +1,6 @@
 const bignum = require('bignum'),
   fs = require('fs'),
   async = require('async'),
-  assert = require('assert'),
   SHA3 = require('sha3'),
   rlp = require('rlp'),
   JSONStream = require('JSONStream'),
@@ -9,7 +8,6 @@ const bignum = require('bignum'),
   Account = require('../lib/account.js'),
   Transaction = require('../lib/transaction.js'),
   Block = require('../lib/block.js');
-
 
 const testUtils = exports;
 
@@ -58,18 +56,10 @@ exports.makeTx = function(txData) {
  * @param {[type]}   acctData postconditions JSON from tests repo
  * @param {Function} cb       completion callback
  */
-exports.verifyAccountPostConditions = function(state, account, acctData, vm, cb) {
+exports.verifyAccountPostConditions = function(state, account, acctData, t, cb) {
 
-  if(arguments.length === 4){
-    cb = vm;
-    vm = false;
-  }
-
-
-  if(!vm){
-    assert.strictEqual(testUtils.toDecimal(account.balance), acctData.balance, 'balance mismatch');
-    assert.strictEqual(testUtils.toDecimal(account.nonce), acctData.nonce, 'nonce mismatch');
-  }
+  t.equal(testUtils.toDecimal(account.balance), acctData.balance, 'correct balance');
+  t.equal(testUtils.toDecimal(account.nonce), acctData.nonce, 'correct nonce');
 
   // validate storage
   var origRoot = state.root,
@@ -86,13 +76,13 @@ exports.verifyAccountPostConditions = function(state, account, acctData, vm, cb)
         key = '0x';
       }
 
-      assert.strictEqual(val, acctData.storage[key], 'storage value mismatch');
+      t.equal(val, acctData.storage[key], 'correct storage value');
       delete acctData.storage[key];
     });
 
     rs.on('end', function() {
       for (var key in acctData.storage) {
-        assert(false, 'key: ' + key + ' not found in storage');
+        t.fail('key: ' + key + ' not found in storage');
       }
 
       state.root = origRoot;
@@ -109,19 +99,22 @@ exports.verifyAccountPostConditions = function(state, account, acctData, vm, cb)
  * @param {Object} results  to verify
  * @param {Object} testData from tests repo
  */
-exports.verifyGas = function(results, testData) {
+exports.verifyGas = function(results, testData, t) {
   var coinbaseAddr = testData.env.currentCoinbase,
     preBal = testData.pre[coinbaseAddr] ? testData.pre[coinbaseAddr].balance : 0;
 
   if (!testData.post[coinbaseAddr]) {
-    assert.deepEqual(testData.pre, testData.post);
     return;
   }
 
   var postBal = bignum(testData.post[coinbaseAddr].balance);
   var balance = postBal.sub(preBal).toString();
-  var amountSpent = results.gasUsed.mul(bignum(testData.transaction.gasPrice));
-  assert.strictEqual(amountSpent.toString(), balance);
+  if(balance !== '0'){
+    var amountSpent = results.gasUsed.mul(testData.transaction.gasPrice);
+    t.equal(amountSpent.toString(), balance, 'correct gas');
+  }else{
+    t.equal(results, undefined);
+  }
 };
 
 /**
@@ -129,14 +122,14 @@ exports.verifyGas = function(results, testData) {
  * @param {Object} results  to verify
  * @param {Object} testData from tests repo
  */
-exports.verifyLogs = function(logs, testData) {
+exports.verifyLogs = function(logs, testData, t) {
   if (testData.logs) {
     testData.logs.forEach(function(log, i) {
       var rlog = logs[i];
-      assert.strictEqual(rlog[0].toString('hex'), log.address, 'log: invalid address');
-      assert.strictEqual('0x' + rlog[2].toString('hex'), log.data, 'log: invalid data');
+      t.equal(rlog[0].toString('hex'), log.address, 'log: valid address');
+      t.equal('0x' + rlog[2].toString('hex'), log.data, 'log: valid data');
       log.topics.forEach(function(topic, i) {
-        assert.strictEqual(rlog[1][i].toString('hex'), topic, 'log: invalid topic');
+        t.equal(rlog[1][i].toString('hex'), topic, 'log: invalid topic');
       });
     });
   }
@@ -169,27 +162,6 @@ exports.makeRunCallData = function(testData, block) {
   };
 };
 
-/**
- * makeRunCallDataWithAccount - helper to create the object for VM.runCall using
- *   the exec object specified in the tests repo
- * @param {Object} testData    object from the tests repo
- * @param {Object} account that is making the call
- * @param {Object} block   that the transaction belongs to
- * @return {Object}        object that will be passed to VM.runCall function
- */
-exports.makeRunCallDataWithAccount = function(testData, account, block) {
-  var exec = testData.exec;
-  return {
-    account: account,
-    origin: new Buffer(exec.origin, 'hex'),
-    data: new Buffer(exec.code.slice(2), 'hex'), // slice off 0x
-    value: bignum(exec.value),
-    caller: new Buffer(exec.caller, 'hex'),
-    to: new Buffer(exec.address, 'hex'),
-    gas: exec.gas,
-    block: block
-  };
-};
 
 /**
  * enableVMtracing - set up handler to output VM trace on console
@@ -347,12 +319,7 @@ exports.setupPreConditions = function(state, testData, done) {
         }, cb2);
       },
       function(cb2) {
-        //WTF? remove
-        if (codeBuf.toString('hex') !== '') {
-          account.storeCode(state, codeBuf, cb2);
-        } else {
-          cb2();
-        }
+         account.storeCode(state, codeBuf, cb2);
       },
       function(cb2) {
         account.stateRoot = storageTrie.root;

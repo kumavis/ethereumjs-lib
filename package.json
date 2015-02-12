@@ -1,6 +1,6 @@
 {
   "name": "ethereumjs-lib",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "NodeJS and browser JS library for Ethereum",
   "main": "./index.js",
   "repository": {
@@ -14,38 +14,31 @@
     "library"
   ],
   "dependencies": {
-    "JSONStream": "^0.10.0",
-    "async": "^0.2.10",
+    "async": "^0.9.0",
     "bigi": "^1.4.0",
     "bignum": "^0.9.1",
-    "bignum-browserify": "0.0.1",
+    "bignum-browserify": "git+https://github.com/wanderer/bignum-browserify",
     "crypto-js": "^3.1.2-5",
     "ecdsa": "^0.5.3",
     "ecurve": "^0.6.0",
-    "eslint": "^0.8.2",
     "ethereumjs-p2p": "git+https://github.com/ethereum/ethereumjs-p2p",
-    "ethereumjs-util": "0.0.5",
-    "levelup": "^0.19.0",
-    "memdown": "^0.10.2",
+    "ethereumjs-util": "git+https://github.com/ethereum/ethereumjs-util",
     "merkle-patricia-tree": "^0.1.23",
-    "minimist": "^1.1.0",
-    "mocha": "^2.1.0",
     "rlp": "0.0.12",
-    "secp256k1": "0.0.13",
+    "secp256k1": "0.0.15",
     "sha3": "^1.1.0",
-    "uglifyjs": "^2.3.6",
     "underscore": "^1.6.0"
   },
   "devDependencies": {
     "JSONStream": "^0.10.0",
-    "ethereum-tests": "0.0.1",
-    "eslint": "^0.8.2",
-    "ethereum-tests": "0.0.3",
+    "browserify": "^8.1.3",
+    "eslint": "^0.14.1",
+    "ethereum-tests": "0.0.5",
+    "faucet": "0.0.1",
     "levelup": "^0.19.0",
     "memdown": "^0.10.2",
     "minimist": "^1.1.0",
-    "mocha": ">=1.15.1",
-    "uglifyjs": "^2.3.6"
+    "tape": "^3.5.0"
   },
   "testling": {
     "browsers": [
@@ -53,30 +46,29 @@
       "firefox/15..latest",
       "chrome/22..latest"
     ],
-    "harness": "mocha-bdd",
     "files": [
-      "test/vm.js",
-      "test/transactions.js",
-      "test/runBlock.js",
-      "test/block.js",
-      "test/blockchain.js",
-      "test/stateTests.js"
+      "test/browserState.js",
+      "test/transactions.js"
     ]
   },
   "scripts": {
-    "test": "./script/eslint.sh && mocha --timeout 60000 --reporter spec ./test/ ./test/common/**",
-    "compile": "browserify index.js -s Ethereum | node ./node_modules/uglifyjs/index.js > ethereum-min.js"
+    "test": "./bin/tester -a | ./node_modules/faucet/bin/cmd.js",
+    "lint": "./script/eslint.sh",
+    "compile": "browserify index.js -s Ethereum"
   },
   "author": {
     "name": "Ethereum",
     "url": "http://ethereum.org"
   },
   "contributors": [
+    "Vitalik Buterin (ttps://github.com/vbuterin)",
     "Martin Becze <wanderer.github.io> (github.com/wanderer)",
-    "Ethers (github.com/ethers)",
-    "Vitalik Buterin (ttps://github.com/vbuterin)"
+    "Ethers (github.com/ethers)"
   ],
   "browser": {
+    "transform": [
+      "brfs"
+    ],
     "ecdsa-native": false,
     "./lib/ecdsaOps.js": "./browser/ecdsaOps.js",
     "bignum": "bignum-browserify",
