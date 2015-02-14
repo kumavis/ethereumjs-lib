@@ -33,7 +33,7 @@ The `tester` can take the following options
 `-a` runs all the tests   
 `-s` runs all the state tests   
 `-v` runs all the VM tests   
-`-r` runs a VM tests given a string which defines the test   
+`-r` runs a state test given a string which defines the test   
 `--vmtrace <filename>` dumps a json VM trace to a file for VM and State tests  
 
 In addition you can select specific VM and State tests with the following options       
