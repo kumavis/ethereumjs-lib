@@ -71,9 +71,6 @@ For `Object` and `Arrays` each of the elements can either be a `Buffer`, hex `St
 --------------------------------------------------------
 
 ### `Transaction` Methods
-#### `transaction.parse(data)`
-parses a serialized transaction
-- `data` - the serialized transaction (usually from the network) in a array of buffers as described in the [wire protocol](https://github.com/ethereum/wiki/wiki/%5BEnglish%5D-Wire-Protocol)
 
 #### `transaction.serialize()`
 Returns the RLP serialization of the transaction
